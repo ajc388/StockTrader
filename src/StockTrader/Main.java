@@ -1,15 +1,15 @@
 package StockTrader;
 
-import java.sql.DriverManager;
-import java.sql.Connection;
-import java.sql.SQLException;
+import java.util.List;
 
 public class Main {
 
 	public static void main(String[] argv) {
-		
+		List<String> ls = StockQueries.getTradeTransactionsForUser(1);
+		StockQueries.printData(ls);
 	}
 
+	
 }
 
 
