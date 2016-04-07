@@ -1,0 +1,18 @@
+﻿--Friends List
+INSERT INTO public."FriendsList"("UserID", "FriendID")
+    VALUES (1, 2);
+INSERT INTO public."FriendsList"("UserID", "FriendID")
+    VALUES (1, 3);
+INSERT INTO public."FriendsList"("UserID", "FriendID")
+    VALUES (2, 1);
+
+--Stock Trackers
+INSERT INTO public."Ticker"("CompanyName", "ShortName")
+    VALUES ('Google', 'GOOG');
+INSERT INTO public."Ticker"("CompanyName", "ShortName")
+    VALUES ('Yahoo', 'YHOO');
+INSERT INTO public."Ticker"("CompanyName", "ShortName")
+    VALUES ('Uber', 'UBER');
+INSERT INTO public."Ticker"("CompanyName", "ShortName")
+    VALUES ('Stark Industries', 'STKI');
+ 
