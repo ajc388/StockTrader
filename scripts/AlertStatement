@@ -1,0 +1,14 @@
+﻿SELECT 	sum(CASE 
+		WHEN tt."Type" = 'BUY' THEN 1
+		WHEN tt."Type" = 'SELL' THEN -1
+	    END) as "Rank",
+	sti."ShortName"
+FROM public."StockTransaction" st 
+	INNER JOIN public."TransactionType" tt
+        ON (st."TransactionTypeID" = tt."TransactionTypeID")
+	INNER JOIN public."Ticker" sti
+        ON (st."StockTransactionID" = sti."TickerID")
+WHERE 	st."UserID" = 1 AND
+	st.date > (CURRENT_DATE - INTERVAL '7 days')
+GROUP BY sti."ShortName"
+ORDER BY "Rank" ASC

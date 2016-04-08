@@ -1,0 +1,5 @@
+﻿SELECT fl."FriendID", u."FirstName", u."LastName" 
+FROM public."FriendsList" fl
+	INNER JOIN public."User" u 
+	ON (u."UserID" = fl."FriendID")
+WHERE fl."UserID" = 1;

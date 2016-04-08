@@ -1,11 +1,12 @@
 package StockTrader;
 
+import java.sql.Array;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-
+import DataModel.Rank;
 import DataModel.Transaction;
 import DataModel.User;
 
@@ -13,28 +14,39 @@ public class StockQueries {
 
 	private static PreparedStatement statement;
 	private static String qry;
+	
 	/***
 	 * 
 	 * @param uid
 	 * @return
 	 */
 	//This operation is O(n)
-	public static List<Integer> getFriendsListForUser(int uid)
+	public static List<User> getFriendsListForUser(int uid)
 	{
-		List<Integer> friendsList = new LinkedList<Integer>();
+		List<User> friendsList = new LinkedList<User>();
 		DataConnector connector;
 		try {
             connector = new DataConnector();
 			
-            //Have to escape quotation marks because I used caps in database
-            statement = connector.cnx.prepareStatement(
-					"SELECT \"FriendID\" FROM public.\"FriendsList\" WHERE \"UserID\" = ?");
+            qry = 	"SELECT fl.\"FriendID\", u.\"FirstName\", u.\"LastName\" "+ 
+					"FROM public.\"FriendsList\" fl "+
+				  	"	INNER JOIN public.\"User\" u "+
+					"	ON (u.\"UserID\" = fl.\"FriendID\") "+
+					"WHERE fl.\"UserID\" = ?;";
+            
+			//Have to escape quotation marks because I used caps in database
+            statement = connector.cnx.prepareStatement(qry);
 			statement.setInt(1, uid);
             ResultSet rs = statement.executeQuery();
             
             //O(n)
             while (rs.next())
-            	friendsList.add(rs.getInt(1)); 
+            {
+            	int id = rs.getInt(1);
+            	String fname = rs.getString(2);
+            	String lname = rs.getString(3);
+            	friendsList.add(new User(id, fname, lname)); 
+            }
             return friendsList;
         } catch (Exception ex) {
             System.out.println(ex);
@@ -50,9 +62,9 @@ public class StockQueries {
 	 * @return
 	 */
 	//This is an O(*) runtime
-	public static List<String> getTradeTransactionsForUser(int uid)
+	public static List<Transaction> getTradeTransactionsForUser(int uid)
 	{
-		List<String> transactions = new LinkedList<String>();
+		List<Transaction> transactions = new LinkedList<Transaction>();
 		DataConnector connector;
 		try {
             connector = new DataConnector();
@@ -62,7 +74,7 @@ public class StockQueries {
 	            	"	INNER JOIN public.\"TransactionType\" tt "+
 	            	"	ON (st.\"TransactionTypeID\" = tt.\"TransactionTypeID\") "+
 	            	"	INNER JOIN public.\"Ticker\" sti "+
-            		"ON (st.\"StockTransactionID\" = sti.\"TickerID\") "+  
+            		"ON (st.\"StockTickerID\" = sti.\"TickerID\") "+  
             		"WHERE st.\"UserID\" = ? "+
             		"ORDER BY date ASC ";
             
@@ -75,8 +87,8 @@ public class StockQueries {
             {
             	String type = rs.getString(2).trim();
             	String ticker = rs.getString(3).trim();
-            	String date = rs.getDate(4) != null ? rs.getDate(4).toString().trim() : ""; //should normally not be nullable...
-            	transactions.add(date+","+type+","+ticker);
+            	Date date = rs.getDate(4);
+            	transactions.add(new Transaction(date,type,ticker));
             }
             return transactions;
         } catch (Exception ex) {
@@ -88,9 +100,48 @@ public class StockQueries {
 		}
 	}
 	
-	public List<Transaction> getAlerts(User user)
+
+	public List<Rank> getStockRanks(Array userIDs)
 	{
-		return null;
+		List<Rank> rankedList = new LinkedList<Rank>();
+		DataConnector connector;
+		try {
+            connector = new DataConnector();
+			
+            //Making queries like this in Java is not fun. Missing LINQ.
+            qry =  "SELECT 	sum(CASE WHEN tt.\"Type\" = 'SELL' THEN -1 "+ 
+            	   "			     WHEN tt.\"Type\" = 'BUY' THEN 1 "+
+            	   "			END) As \"Rank\", "+
+            	   "sti.\"ShortName\" "+
+            	   "FROM public.\"StockTransaction\" st "+ 
+            	   "	INNER JOIN public.\"TransactionType\" tt "+
+            	   "		ON (st.\"TransactionTypeID\" = tt.\"TransactionTypeID\") "+
+            	   "	INNER JOIN public.\"Ticker\" sti "+
+            	   "		ON (st.\"StockTickerID\" = sti.\"TickerID\") "+
+            	   "	WHERE 	st.\"UserID\" IN ? AND "+
+            	   "		st.date >= (CURRENT_DATE - INTERVAL '7 days') "+
+            	   "GROUP BY sti.\"ShortName\" "+
+            	   "ORDER BY \"Rank\" ASC"; 
+            
+            statement = connector.cnx.prepareStatement(qry);
+			statement.setArray(1, userIDs);
+            ResultSet rs = statement.executeQuery();
+            
+            //O(n)
+            while (rs.next())
+            {
+            	int rank = rs.getInt(1);
+            	String ticker = rs.getString(2);
+            	rankedList.add(new Rank(rank, ticker));
+            }
+
+        	return rankedList;
+        } catch (Exception ex) {
+            System.out.println(ex);
+            return null;
+        } finally {
+        	connector = null;
+		}
 	}
 	
 	/***
