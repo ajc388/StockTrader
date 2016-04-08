@@ -14,10 +14,10 @@ public class Rank {
 	public String toString()
 	{
 		if (rank > 0)
-			return "Buy Alert,"+rank+","+ticker;
+			return rank+",SELL,"+ticker;
 		else if ( rank == 0)
-			return "Stagnant Trade "+ticker;
+			return "NEUTRAL,"+ticker;
 		else
-			return "Sell Alert,"+rank+","+ticker;
+			return (rank*-1)+",SELL,"+ticker;
 	}
 }

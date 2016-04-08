@@ -20,12 +20,22 @@ public class DataConnector {
 	}
 	
 	public Connection pgConnect() {
-		System.out.println("Initializing PostgreSQL Connection.");
 		try {
+			System.out.println("Intialized connection.");
 			return DriverManager.getConnection(url, user, pword);
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return null;
+		}
+	}
+	
+	public void close()
+	{
+		try {
+			cnx.close();
+			System.out.println("Closed connection.");
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 	}
 	
